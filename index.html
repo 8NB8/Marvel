@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <title>Marvel Character</title>
+</head>
+<body class=" bg-gradient-to-r from-slate-900 via-red-700 to-slate-900">
+    <header>
+        <img src="./src/Marvel_Logo2.png" alt="marvel_logo" class="h-36 m-auto my-4 ">
+    </header>
+    <div class="bg-slate-900 mt-6 h-30"> 
+        <h1 class="text-3xl text-white font-semibold text-center py-10">
+        Your favorite place to find all MARVEL characters!
+        </h1>
+    </div>
+
+    <div class="container m-auto">
+        <div class="w-1/3 m-auto mt-10 drop-shadow-xl input-container flex items-center">
+          <input type="text" class="input text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white" placeholder="Search for your hero here..." id="input-box" />
+        </div>
+
+        <div class="list results-container bg-gray-700 w-1/3 m-auto"></div>
+        <div class="display-container grid grid-cols-4 gap-4 h-60 max-sm:grid-cols-1 max-md:grid-cols-2" id="show-container"></div>
+      </div> 
+
+      <script src="api-data.js"></script>
+      <script src="./main.js"></script>
+
+</body>
+</html>
