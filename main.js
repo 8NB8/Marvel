@@ -23,7 +23,7 @@ function displayFavorites() {
   Promise.all(
     favorites.map((characterId) =>
       fetch(
-        `https://gateway.marvel.com:443/v1/public/characters/${characterId}?ts=${timestamp}&apikey=${apiKey}&hash=${hashValue}`
+        `https://gateway.marvel.com:443/v1/public/characters/${characterId}?ts=${timestamp}&apikey=${apiKey}&hash=${hashValue}&limit=12`
       ).then((response) => response.json())
     )
   )
@@ -52,7 +52,7 @@ input.addEventListener("input", async () => {
     return;
   }
 
-  const url = `https://gateway.marvel.com:443/v1/public/characters?ts=${timestamp}&apikey=${apiKey}&hash=${hashValue}&nameStartsWith=${input.value}`;
+  const url = `https://gateway.marvel.com:443/v1/public/characters?ts=${timestamp}&apikey=${apiKey}&hash=${hashValue}&nameStartsWith=${input.value}&limit=12`;
 
   const response = await fetch(url);
   const jsonData = await response.json();
