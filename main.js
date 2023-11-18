@@ -39,16 +39,16 @@ input.addEventListener("input", async () => {
     div.innerHTML = `<p class="item">${word}</p>`;
     listContainer.appendChild(div);
   });
-  
+
 jsonData.data["results"].forEach((element) => {
     showContainer.innerHTML += `
-      <div class="bg-white">
+      <div class="bg-gradient-to-r from-slate-900 via-red-700 to-slate-900 rounded-xl">
         <div class="mb-2 flex justify-center items-center">
           <img class="character-image" src="${
             element.thumbnail["path"] + "." + element.thumbnail["extension"]
           }"/>
         </div>
-        <div class="character-name text-black mb-3 text-center">${element.name}</div>
+        <div class="character-name text-white mb-3 text-center">${element.name}</div>
         <div class="text-center pb-4">
           <a href="#bookmark" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-gray-600 rounded-lg hover:bg-red-800 focus:ring-2 focus:outline-none focus:ring-gray-400">
             Add to favorite
