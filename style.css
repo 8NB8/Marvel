@@ -6,8 +6,6 @@
 .favorite-button svg{
     fill: black;
 }
-.pagination-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px; 
+.pagination-item.current-page {
+    background-color: #e53e3e; 
 }

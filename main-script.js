@@ -5,6 +5,7 @@ const paginationContainer = document.querySelector('.pagination-container');
 
 let characters = [];
 let currentPage = 1;
+let filteredResults = []; 
 const resultsPerPage = 12;
 
 function isBookmarked(character) {
@@ -18,21 +19,20 @@ function displayResults() {
 
     const startIndex = (currentPage - 1) * resultsPerPage;
     const endIndex = startIndex + resultsPerPage;
-    const currentResults = characters.slice(startIndex, endIndex);
 
-    if (inputBox.value.trim() === '') {
-        const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
+    const searchTerm = inputBox.value.trim().toLowerCase();
+    filteredResults = characters.filter(
+        (character) => character.name.toLowerCase().includes(searchTerm)
+    );
 
-        bookmarkedCharacters.forEach((character) => {
-            const characterElement = createCharacterElement(character);
-            showContainer.appendChild(characterElement);
-        });
-    } else {
-        currentResults.forEach((character) => {
-            const characterElement = createCharacterElement(character);
-            showContainer.appendChild(characterElement);
-        });
-    }
+    paginationContainer.style.display = filteredResults.length > 0 ? 'block' : 'none';
+
+    const currentResults = filteredResults.slice(startIndex, endIndex);
+
+    currentResults.forEach((character) => {
+        const characterElement = createCharacterElement(character);
+        showContainer.appendChild(characterElement);
+    });
 
     updatePagination();
 }
@@ -84,6 +84,8 @@ function displayBookmarkedCharacters() {
     const showContainer = document.getElementById('show-container');
     showContainer.innerHTML = '';
 
+    paginationContainer.style.display = 'none';
+
     if (inputBox.value.trim() === '') {
         const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
 
@@ -94,13 +96,23 @@ function displayBookmarkedCharacters() {
     }
 }
 function updatePagination() {
-    const totalPages = Math.ceil(characters.length / resultsPerPage);
+    const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
     paginationContainer.innerHTML = '';
+
+    const leftArrow = createArrowButton('left', '←');
+    leftArrow.addEventListener('click', () => navigatePage('prev'));
+
+    paginationContainer.appendChild(leftArrow);
 
     for (let i = 1; i <= totalPages; i++) {
         const pageButton = document.createElement('button');
         pageButton.textContent = i;
-        pageButton.classList.add( 'pagination-item', 'mx-1', 'px-2', 'py-1', 'bg-gray-600', 'text-white', 'rounded', 'focus:outline-none', 'hover:bg-gray-700');
+        pageButton.classList.add('pagination-item', 'mx-1', 'px-2', 'py-1', 'bg-gray-600', 'text-white', 'rounded', 'focus:outline-none', 'hover:bg-gray-700');
+
+        if (i === currentPage) {
+            pageButton.classList.add('current-page');
+        }
+
         pageButton.addEventListener('click', () => {
             currentPage = i;
             displayResults();
@@ -108,9 +120,47 @@ function updatePagination() {
 
         paginationContainer.appendChild(pageButton);
     }
+
+    const rightArrow = createArrowButton('right', '→');
+    rightArrow.addEventListener('click', () => navigatePage('next'));
+
+    paginationContainer.appendChild(rightArrow);
+
+    paginationContainer.style.display = 'flex';
+    paginationContainer.style.alignItems = 'center';
+    paginationContainer.style.justifyContent = 'center';
+
+    leftArrow.style.display = currentPage === 1 ? 'none' : 'block';
+    rightArrow.style.display = currentPage === totalPages ? 'none' : 'block';
 }
-inputBox.addEventListener('input', async () => {
+
+
+  function createArrowButton(direction, text) {
+    const arrowButton = document.createElement('button');
+    arrowButton.textContent = text;
+    arrowButton.classList.add('pagination-item', 'mx-1', 'px-2', 'py-1', 'bg-gray-600', 'text-white', 'rounded', 'focus:outline-none', 'hover:bg-gray-700');
+  
+    arrowButton.classList.add(`pagination-${direction}-arrow`);
+  
+    return arrowButton;
+  }
+  
+  function navigatePage(direction) {
+    const totalPages = Math.ceil(characters.length / resultsPerPage);
+  
+    if (direction === 'prev' && currentPage > 1) {
+      currentPage--;
+    } else if (direction === 'next' && currentPage < totalPages) {
+      currentPage++;
+    }
+  
+    displayResults();
+  }
+  
+  inputBox.addEventListener('input', async () => {
     const searchTerm = inputBox.value.trim();
+
+    currentPage = 1;
 
     if (searchTerm.length > 0) {
         characters = await searchMarvelCharacters(searchTerm);
