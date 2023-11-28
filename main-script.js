@@ -2,40 +2,13 @@ const inputBox = document.getElementById('input-box');
 const resultsContainer = document.querySelector('.results-container');
 const displayContainer = document.getElementById('show-container');
 const paginationContainer = document.querySelector('.pagination-container');
+const loader = document.getElementById('loader');
 
 let characters = [];
 let currentPage = 1;
-let filteredResults = []; 
+let filteredResults = [];
+let displayedBookmarkedCharacters = [];
 const resultsPerPage = 12;
-
-function isBookmarked(character) {
-    const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
-    return bookmarkedCharacters.some((c) => c.id === character.id);
-}
-
-function displayResults() {
-    const showContainer = document.getElementById('show-container');
-    showContainer.innerHTML = '';
-
-    const startIndex = (currentPage - 1) * resultsPerPage;
-    const endIndex = startIndex + resultsPerPage;
-
-    const searchTerm = inputBox.value.trim().toLowerCase();
-    filteredResults = characters.filter(
-        (character) => character.name.toLowerCase().includes(searchTerm)
-    );
-
-    paginationContainer.style.display = filteredResults.length > 0 ? 'block' : 'none';
-
-    const currentResults = filteredResults.slice(startIndex, endIndex);
-
-    currentResults.forEach((character) => {
-        const characterElement = createCharacterElement(character);
-        showContainer.appendChild(characterElement);
-    });
-
-    updatePagination();
-}
 
 function createCharacterElement(character) {
     const characterElement = document.createElement('div');
@@ -66,33 +39,98 @@ function createCharacterElement(character) {
     return characterElement;
 }
 
+function isBookmarked(character) {
+    const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
+    return bookmarkedCharacters.some((c) => c.id === character.id);
+}
+
+function showLoader() {
+    loader.style.display = 'block';
+}
+
+function hideLoader() {
+    loader.style.display = 'none';
+}
+
+async function searchMarvelCharactersWithLoader(searchTerm) {
+    showLoader();
+    characters = await searchMarvelCharacters(searchTerm);
+    hideLoader();
+}
+
+function displayResults() {
+    const showContainer = document.getElementById('show-container');
+    showContainer.innerHTML = '';
+
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+
+    const searchTerm = inputBox.value.trim().toLowerCase();
+    filteredResults = characters.filter(
+        (character) => character.name.toLowerCase().includes(searchTerm)
+    );
+
+    paginationContainer.style.display = filteredResults.length > 0 ? 'block' : 'none';
+
+    if (filteredResults.length === 0) {
+        const errorMessageContainer = document.createElement('div');
+        errorMessageContainer.classList.add('text-white', 'text-center', 'my-4');
+
+        const errorMessage = document.createElement('div');
+        errorMessage.textContent = 'No characters found. Try again with another character name.';
+
+        errorMessageContainer.appendChild(errorMessage);
+        showContainer.appendChild(errorMessageContainer);
+    } else {
+        const currentResults = filteredResults.slice(startIndex, endIndex);
+
+        currentResults.forEach((character) => {
+            const characterElement = createCharacterElement(character);
+            showContainer.appendChild(characterElement);
+        });
+
+        updatePagination();
+    }
+}
+
+function displayBookmarkedCharacters() {
+    const showContainer = document.getElementById('show-container');
+    paginationContainer.style.display = 'none';
+
+    const searchTerm = inputBox.value.trim().toLowerCase();
+    showContainer.innerHTML = '';
+
+    if (searchTerm === '') {
+        const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
+
+        displayedBookmarkedCharacters = bookmarkedCharacters.slice(); 
+
+        displayedBookmarkedCharacters.forEach((character) => {
+            const characterElement = createCharacterElement(character);
+            showContainer.appendChild(characterElement);
+        });
+    } else {
+        displayResults();
+    }
+}
+
 function bookmarkCharacter(character) {
     const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
     const isAlreadyBookmarked = bookmarkedCharacters.some((c) => c.id === character.id);
     if (isAlreadyBookmarked) {
         const updatedBookmarks = bookmarkedCharacters.filter((c) => c.id !== character.id);
         localStorage.setItem('bookmarkedCharacters', JSON.stringify(updatedBookmarks));
+
+        displayedBookmarkedCharacters = displayedBookmarkedCharacters.filter((c) => c.id !== character.id);
     } else {
         bookmarkedCharacters.push(character);
         localStorage.setItem('bookmarkedCharacters', JSON.stringify(bookmarkedCharacters));
     }
 
-    displayResults();
-}
-
-function displayBookmarkedCharacters() {
-    const showContainer = document.getElementById('show-container');
-    showContainer.innerHTML = '';
-
-    paginationContainer.style.display = 'none';
-
     if (inputBox.value.trim() === '') {
-        const bookmarkedCharacters = JSON.parse(localStorage.getItem('bookmarkedCharacters')) || [];
-
-        bookmarkedCharacters.forEach((character) => {
-            const characterElement = createCharacterElement(character);
-            showContainer.appendChild(characterElement);
-        });
+        displayBookmarkedCharacters();
+    } else {
+        displayResults();
     }
 }
 function updatePagination() {
@@ -134,39 +172,52 @@ function updatePagination() {
     rightArrow.style.display = currentPage === totalPages ? 'none' : 'block';
 }
 
-
-  function createArrowButton(direction, text) {
+function createArrowButton(direction, text) {
     const arrowButton = document.createElement('button');
     arrowButton.textContent = text;
     arrowButton.classList.add('pagination-item', 'mx-1', 'px-2', 'py-1', 'bg-gray-600', 'text-white', 'rounded', 'focus:outline-none', 'hover:bg-gray-700');
-  
+
     arrowButton.classList.add(`pagination-${direction}-arrow`);
-  
+
     return arrowButton;
-  }
-  
-  function navigatePage(direction) {
+}
+
+function navigatePage(direction) {
     const totalPages = Math.ceil(characters.length / resultsPerPage);
-  
+
     if (direction === 'prev' && currentPage > 1) {
-      currentPage--;
+        currentPage--;
     } else if (direction === 'next' && currentPage < totalPages) {
-      currentPage++;
+        currentPage++;
     }
-  
+
     displayResults();
-  }
-  
-  inputBox.addEventListener('input', async () => {
+}
+
+function debounce(func, delay) {
+    let timeoutId;
+    return function () {
+        const context = this;
+        const args = arguments;
+
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(context, args);
+        }, delay);
+    };
+}
+
+inputBox.addEventListener('input', debounce(async () => {
     const searchTerm = inputBox.value.trim();
 
     currentPage = 1;
 
     if (searchTerm.length > 0) {
-        characters = await searchMarvelCharacters(searchTerm);
+        await searchMarvelCharactersWithLoader(searchTerm);
         displayResults();
     } else {
         displayBookmarkedCharacters();
     }
-});
+}, 700));
+
 displayBookmarkedCharacters();
